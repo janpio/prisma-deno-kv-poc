@@ -8,7 +8,7 @@ const envVars = await load();
  * Initialize.
  */
 
-const kv = await Deno.openKv("test")
+const kv = await Deno.openKv()
 const prisma = new PrismaClient({
   datasources: {
     db: {
