@@ -1,0 +1,8 @@
+{
+  "lock": false,
+  "tasks": {
+    "db:dump": "deno run --allow-read --allow-env --unstable tools/dump.ts",
+    "db:seed": "deno run --allow-read --allow-env --allow-net --unstable prisma/seed.ts",
+    "db:reset": "deno run --allow-read --allow-env --unstable tools/reset.ts"
+  }
+}
