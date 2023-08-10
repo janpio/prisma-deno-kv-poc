@@ -8,10 +8,49 @@ const envVars = await load();
  * Initialize.
  */
 
+const kv = await Deno.openKv("test")
 const prisma = new PrismaClient({
   datasources: {
     db: {
       url: envVars.DATABASE_URL,
+    },
+  },
+}).$extends({
+  query: {
+    async $allOperations({ model, operation, args, query }) {
+      console.log(model, operation, args /*, query */)
+
+      let result = null
+
+      if (operation === 'create') {
+        if (!args.data.id) {
+          args.data.id = crypto.randomUUID()
+        }
+
+        const res = await kv.set(["dinosaurs", args.data.id], args.data)
+        console.log(res)
+
+        console.log("created", args.data)
+        result = args.data
+      } else if (operation === 'findUnique') {
+        const res = await kv.get(["dinosaurs", args.where.id])
+        console.log(res)
+        result = res.value
+      } else if (operation === 'findMany') {
+        const iter = kv.list<string>({ prefix: ["dinosaurs"] });
+        result = [];
+        for await (const res of iter) { console.log(res); result.push(res.value); }
+        console.log({ result })
+      } else if (operation === 'delete') {
+        const res = await kv.delete(["dinosaurs", args.where.id])
+        console.log(res)
+        result = res
+      } else {
+        throw Error(`Operation ${operation} not supported`)
+      }
+
+      return Promise.resolve(result)
+      //return query(args)
     },
   },
 });
@@ -36,7 +75,7 @@ router
     const { id } = context.params;
     const dinosaur = await prisma.dinosaur.findUnique({
       where: {
-        id: Number(id),
+        id,
       },
     });
     context.response.body = dinosaur;
@@ -57,7 +96,7 @@ router
     const { id } = context.params;
     const dinosaur = await prisma.dinosaur.delete({
       where: {
-        id: Number(id),
+        id
       },
     });
     context.response.body = dinosaur;
