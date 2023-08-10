@@ -11,6 +11,16 @@ const prisma = new PrismaClient({
   },
 });
 
+const xprisma = prisma.$extends({
+  query: {
+    $allOperations({ model, operation, args, query }) {
+      //console.log(model, operation, args, query)
+      return Promise.resolve({ id: 'foo' })
+      //return query(args)
+    },
+  },
+})
+
 const dinosaurData: Prisma.DinosaurCreateInput[] = [
   {
     name: "Aardonyx",
@@ -31,11 +41,11 @@ const dinosaurData: Prisma.DinosaurCreateInput[] = [
  */
 
 for (const u of dinosaurData) {
-  const dinosaur = await prisma.dinosaur.create({
+  const dinosaur = await xprisma.dinosaur.create({
     data: u,
   });
   console.log(`Created dinosaur with id: ${dinosaur.id}`);
 }
 console.log(`Seeding finished.`);
 
-await prisma.$disconnect();
+await xprisma.$disconnect();
